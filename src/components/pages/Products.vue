@@ -60,9 +60,9 @@
                   <label for="customFile">或 上傳圖片
                     <i class="fas fa-spinner fa-spin"></i>
                   </label>
-                  <input type="file" id="customFile" class="form-control" ref="files">
+                  <input type="file" id="customFile" class="form-control" ref="files" @change="uploadFile">
                 </div>
-                <img img="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=828346ed697837ce808cae68d3ddc3cf&auto=format&fit=crop&w=1350&q=80" class="img-fluid" alt="">
+                <img :src="tempProduct.imageUrl" width="100%">
               </div>
               <div class="col-sm-8">
                 <div class="form-group">
@@ -152,11 +152,9 @@ export default {
   },
   methods: {
     getProducts() {
-      const api = `${process.env.APIPATH}/api/${
-        process.env.CUSTOMPATH
-      }/admin/products/all`;
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/products/all`;
       const vm = this;
-      this.$http.get(api).then(response => {
+      this.$http.get(api).then((response) => {
         console.log(response.data);
         vm.products = response.data.products;
       });
@@ -172,18 +170,14 @@ export default {
       $("#productModal").modal("show");
     },
     updateProduct() {
-      let api = `${process.env.APIPATH}/api/${
-        process.env.CUSTOMPATH
-      }/admin/product`;
+      let api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/product`;
       let httpMethod = "post";
       const vm = this;
       if (!vm.isNew) {
-        api = `${process.env.APIPATH}/api/${
-          process.env.CUSTOMPATH
-        }/admin/product/${vm.tempProduct.id}`;
+        api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/product/${vm.tempProduct.id}`;
         httpMethod = "put";
       }
-      this.$http[httpMethod](api, { data: vm.tempProduct }).then(response => {
+      this.$http[httpMethod](api, { data: vm.tempProduct }).then((response) => {
         if (response.data.success) {
           $("#productModal").modal("hide");
           vm.getProducts();
@@ -191,6 +185,23 @@ export default {
           $("#productModal").modal("hide");
           vm.getProducts();
           console.log("新增失敗");
+        }
+      });
+    },
+    uploadFile() {
+      const uploadedFile = this.$refs.files.files[0];
+      const formData = new FormData();
+      const vm = this;
+      formData.append("file-to-upload", uploadedFile);
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/upload`;
+      this.$http.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }).then((response) => {
+        console.log(response.data);
+        if (response.data.success) {
+          vm.$set(vm.tempProduct, 'imageUrl', response.data.imageUrl )
         }
       });
     }
