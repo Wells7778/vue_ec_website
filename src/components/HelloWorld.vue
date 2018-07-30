@@ -1,6 +1,6 @@
 <template>
   <div class="hello">
-
+    <a href="" @click.prevent="signout">logout</a>
   </div>
 </template>
 
@@ -11,6 +11,18 @@ export default {
     return {
       msg: "Welcome to Your Vue.js App"
     };
+  },
+  methods: {
+    signout() {
+      const api = `${process.env.APIPATH}/logout`;
+      const vm = this;
+      this.$http.post(api).then(response => {
+        console.log(response.data);
+        if (response.data.success) {
+          vm.$router.push("/login");
+        }
+      });
+    }
   }
 };
 </script>
