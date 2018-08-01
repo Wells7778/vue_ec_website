@@ -1,5 +1,6 @@
 <template>
   <div>
+    <loading :active.sync="isLoading"></loading>
     <div class="text-right">
       <button class="btn btn-primary mt-4" @click="openModal(true)">
         建立新的產品
@@ -36,6 +37,7 @@
         </tr>
       </tbody>
     </table>
+    <!-- Modal -->
     <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content border-0">
@@ -58,7 +60,7 @@
                 </div>
                 <div class="form-group">
                   <label for="customFile">或 上傳圖片
-                    <i class="fas fa-spinner fa-spin"></i>
+                    <i class="fas fa-spinner fa-spin" v-if="status.fileUploading"></i>
                   </label>
                   <input type="file" id="customFile" class="form-control" ref="files" @change="uploadFile">
                 </div>
@@ -146,17 +148,25 @@ export default {
   data: function() {
     return {
       products: [],
+      pagination: {},
       tempProduct: {},
-      isNew: true
+      isNew: false,
+      isLoading: false,
+      status: {
+        fileUploading: false
+      }
     };
   },
   methods: {
     getProducts() {
       const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/products/all`;
       const vm = this;
+      vm.isLoading = true;
       this.$http.get(api).then((response) => {
         console.log(response.data);
         vm.products = response.data.products;
+        vm.isLoading = false;
+        vm.pagination = response.data.pagination;
       });
     },
     openModal(isNew, item) {
@@ -194,6 +204,7 @@ export default {
       const vm = this;
       formData.append("file-to-upload", uploadedFile);
       const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/upload`;
+      vm.status.fileUploading = true;
       this.$http.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -202,7 +213,10 @@ export default {
         console.log(response.data);
         if (response.data.success) {
           vm.$set(vm.tempProduct, 'imageUrl', response.data.imageUrl )
+        } else {
+          this.$bus.$emit('message:push', response.data.message, 'danger');
         }
+        vm.status.fileUploading = false;
       });
     }
   },
